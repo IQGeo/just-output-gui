@@ -1,0 +1,36 @@
+<html>
+    <head>        
+        <title>Testbed</title>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script type="text/javascript" src="require.min.js" ></script>
+        <script type="text/javascript" src="just-output-gui.js"></script>
+        
+        <script type="text/javascript">
+            require.config({
+                paths: {           
+                    'bluebird':       './bluebird',         
+                    'diff':       './diff',
+                    'just-output': './just-output'
+                }
+            });
+            
+            var specs = [
+                'test.spec'
+            ];
+            
+            require(['bluebird','just-output'], function (Promise, jo) {
+                window.Promise = Promise;
+                Promise.longStackTraces();
+                const promisifiedRequire = spec => new Promise((resolve, reject) => require([spec], resolve, reject));
+                            
+                //load suits in order
+                Promise.each(specs, promisifiedRequire)
+                .then(function () {
+                    this.jo.runTests(null, 'results/')
+                });
+            });
+        </script>        
+    </body>    
+</html>

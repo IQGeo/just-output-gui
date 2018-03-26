@@ -3,9 +3,14 @@ const path = require('path');
 module.exports = {
     entry: './src/ui/app',
     mode: 'development',
+    devServer: {
+        contentBase: path.join(__dirname, "public"),
+        compress: true,
+        port: 8080
+    },
     output: {
         filename: 'just-output-gui.js',
-        path: path.resolve(__dirname, './dist'),
+        path: path.resolve(__dirname, './public'),
         chunkFilename: '[name].bundle.js',
         publicPath: "/assets/"
     },

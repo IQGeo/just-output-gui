@@ -12,7 +12,7 @@ class App extends Component {
         this.state = {
             suites: null, 
             status: {},
-            testsInProgress: false,
+            testsInProgress: true,
             hidePassingTests: true 
         }
     }
@@ -23,6 +23,7 @@ class App extends Component {
         jo.tests.map((t) => {
             suites[t.suite] = suites[t.suite] || {};
             suites[t.suite][t.name] = t;
+            suites[t.suite][t.name].status = 'processing';
         })
         
         this.setState({suites});    
@@ -30,8 +31,8 @@ class App extends Component {
         window.handleTestResult = (result, test) => {            
             const {name, suite, output} = test;
             const {pass, message, comparison = [], diffs = []} = result;
-            let suites = { ...this.state.suites }
-            let status = { ...this.state.status }
+            let suites = { ...this.state.suites };
+            let status = { ...this.state.status };
             suites[suite][name].status = pass ?  "success" : "error";
             suites[suite][name].output = output;
             suites[suite][name].message = message;
@@ -40,12 +41,14 @@ class App extends Component {
             status[suite] = "";
             Object.keys(suites[suite]).forEach((test) => {
                 if (status[suite] != "error") {
-                    status[suite] = suites[suite][test].status
+                    status[suite] = suites[suite][test].status;
                 }
             });
             
-            this.setState({suites, status})
+            this.setState({suites, status});
         };
+        
+        
     }
     
     executeTests(filter = "") {
@@ -53,13 +56,14 @@ class App extends Component {
         this.jo.runTests(filter)
         .then(() => {
             this.setState({testsInProgress: false});
-        })
+        });
     }        
     
     handleRunTest(test) {
-        let suites = { ...this.state.suites }
-        let status = { ...this.state.status }
+        let suites = { ...this.state.suites };
+        let status = { ...this.state.status };
         const {name, suite, output} = test;
+        
         status[suite] = "processing";
         suites[suite][name].status = "processing";
         suites[suite][name].output = "";
@@ -69,14 +73,14 @@ class App extends Component {
     }
     
     handleTestAll() {
-        let suites = { ...this.state.suites }
-        let status = { ...this.state.status }
+        let suites = { ...this.state.suites };
+        let status = { ...this.state.status };
                 
         Object.keys(suites)
         .map((suite) => {
             status[suite] = "processing";
             Object.keys(suites[suite]).forEach((test) => {
-                suites[suite][test].status = "processing"
+                suites[suite][test].status = "processing";
             });            
         })
         this.setState({suites, status, testsInProgress: true});        
@@ -84,16 +88,37 @@ class App extends Component {
     }
     
     handleRunSuite(suite) {
-        let suites = { ...this.state.suites }
-        let status = { ...this.state.status }
+        let suites = { ...this.state.suites };
+        let status = { ...this.state.status };
         status[suite] = "processing";
         
         Object.keys(suites[suite]).forEach((test) => {
-            suites[suite][test].status = "processing"
+            suites[suite][test].status = "processing";
         })
         
-        this.setState({suites, status})
+        this.setState({suites, status});
         this.executeTests(suite);
+        
+        Object.keys(suites[suite]).forEach((test) => {
+            suites[suite][test].status = "";
+        })
+        
+        this.setState({suites, status});
+    }
+    
+    handleCancel() {
+        let suites = { ...this.state.suites };
+        let status = { ...this.state.status };
+        
+        this.jo.cancelTests();
+        Object.keys(suites)
+        .map((suite) => {
+            status[suite] = "";
+            Object.keys(suites[suite]).forEach((test) => {
+                suites[suite][test].status = "";
+            });            
+        })
+        this.setState({suites, status, testsInProgress: false});        
     }
     
     render() {
@@ -124,6 +149,7 @@ class App extends Component {
                     onHidePassingTests={ (e) => this.setState({hidePassingTests: e}) }
                     testsInProgress={ testsInProgress }
                     onTestAll={ this.handleTestAll.bind(this) }
+                    onCancel={ this.handleCancel.bind(this) }
                     onRunSuite={ this.handleRunSuite.bind(this)}
                     onRunTest={ this.handleRunTest.bind(this)}                    
                 />
@@ -131,6 +157,6 @@ class App extends Component {
         )
     }
 };
-  
+
 ReactDOM.render(<LoadingView />, document.getElementById('app'));
 window.justOutputUIRender = (showBack = false) => ReactDOM.render(<App showBack={ showBack }/>, document.getElementById('app'));
